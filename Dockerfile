@@ -6,14 +6,17 @@ WORKDIR /app
 # package.json과 package-lock.json 복사
 COPY package*.json ./
 
-# 의존성 설치
-RUN npm ci --only=production && npm cache clean --force
+# 모든 의존성 설치 (devDependencies 포함)
+RUN npm ci && npm cache clean --force
 
 # 소스 코드 복사
 COPY . .
 
 # TypeScript 빌드
 RUN npm run build
+
+# 프로덕션 의존성만 설치
+RUN npm ci --only=production && npm cache clean --force
 
 # 프로덕션 스테이지
 FROM node:18-alpine AS production
