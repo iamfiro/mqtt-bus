@@ -18,7 +18,7 @@ RUN npm run build
 # 프로덕션 의존성만 설치
 RUN npm ci --only=production && npm cache clean --force
 
-# 프로덕션 스테이지
+# 프로덕션 스테이지 
 FROM node:18-alpine AS production
 
 # 시스템 패키지 업데이트 및 필수 도구 설치
