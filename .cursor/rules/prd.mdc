@@ -1,0 +1,122 @@
+---
+alwaysApply: true
+---
+# 🚌 Route-Differentiated Smart Bus Stop Bell System – PRD (Product Requirements Document)
+
+⸻
+
+1️⃣ Product Overview
+
+🎯 Objective
+
+To resolve frequent complaints about buses passing by stops without stopping, digital exclusion issues, and notification delays by developing a smart bus stop bell system that:
+	•	Provides route-differentiated, clearly visible physical buttons
+	•	Allows anyone to use it intuitively without smartphones
+	•	Ensures arrival notifications within 1 second
+	•	Delivers an open, extensible data platform
+
+⸻
+
+2️⃣ Problem Definition
+
+Current Issues:
+	•	Mixed Route Display: Drivers cannot quickly distinguish which route was called.
+	•	Smartphone Dependency: Elderly and foreign passengers cannot easily use the system.
+	•	GPS Notification Delay: Alerts often arrive too late, causing complaints.
+
+In 2024, more than 80,000 no-stop complaints were reported every month.
+
+⸻
+
+3️⃣ Key Features
+
+🚏 Bus Stop Call Device
+	•	Color-coded, clearly labeled physical buttons for each route
+	•	Weatherproof (IP54), impact-resistant housing with low-temperature battery
+	•	LED indicators for call and cancellation status
+
+🚌 Bus Notification Device
+	•	Direct CAN-Bus power connection
+	•	High-intensity red/green LED bar
+	•	85 dB Piezo buzzer for audible alerts
+	•	Clear visibility in daylight and noisy environments
+
+🌐 Central Platform
+	•	AWS cloud container-based architecture
+	•	Real-time handling of thousands of calls per second
+	•	Average end-to-end delay ≤1 second
+	•	Redis and Kafka for processing and storage
+	•	APIs: GTFS-Realtime feed, REST, WebSocket
+
+⸻
+
+4️⃣ System Architecture & Technical Stack
+
+🔗 IoT Side
+
+Component	Details
+GNSS Module	GPS location and speed (NMEA)
+MCU	ESP32 / STM32 (MQTT publishing)
+Button/LED	Physical interface (IP54 waterproof)
+
+☁️ Server Side
+
+Layer	Technology
+Data Ingestion	Node.js with mqtt package
+Buffering	Apache Kafka (kafkajs)
+ETA Calculation	Node.js + Redis TimeSeries, haversine-distance, kalman-filter
+API & Feed	Express.js, Socket.io, gtfs-realtime-bindings
+Monitoring & Alerts	Prometheus, Grafana, Slack Webhook
+
+
+⸻
+
+5️⃣ Data Flow
+
+[Bus Stop Call Device]
+       │ MQTT
+       ▼
+[MQTT Broker]
+       │
+       ▼
+[Kafka Topic (gps)]
+       │
+       ▼
+[ETA Calculation Engine]
+       │
+   ├── Redis (TimeSeries storage)
+   ├── GTFS-Realtime API
+   └── WebSocket Live Push
+
+
+⸻
+
+6️⃣ Functional Details
+
+Area	Description
+Call Creation	Button press sends a JSON MQTT message including the route code
+Data Buffering	Kafka persists messages for real-time or delayed consumption
+Distance Calculation	Haversine formula computes distance in meters
+Speed Filtering	Kalman Filter reduces GPS noise
+ETA Calculation	Distance ÷ Smoothed Speed
+Data Storage	Redis TimeSeries keeps last 30s records
+API Access	REST (/arrival/:stopId), GTFS (/gtfs), WebSocket (/socket)
+Monitoring	Prometheus-based delay/error monitoring
+
+
+⸻
+
+Deliverables
+
+Item	Description
+Bus Stop Call Device	IP54 weatherproof, low-temperature design, button & LED prototype
+Bus Notification Device	High-intensity LED & buzzer hardware
+Central Platform	AWS-based real-time processing backend
+Dashboard	Visual statistics of calls, cancellations, stops
+Presentation Materials	CAD models, slides, video clips, demonstration GIFs
+
+
+11️⃣ Success Criteria
+	•	End-to-end call-to-alert delay ≤1 second
+	•	80%+ user satisfaction for route clarity and accessibility
+	•	Verified feasibility through field testing and expert review
