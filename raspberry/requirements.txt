@@ -1,0 +1,5 @@
+paho-mqtt==1.6.1
+RPi.GPIO==0.7.1
+python-dotenv==1.0.0
+colorlog==6.7.0
+schedule==1.2.0 

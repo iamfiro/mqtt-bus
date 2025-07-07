@@ -1,0 +1,46 @@
+[Unit]
+Description=Smart Bus Stop System
+Documentation=https://github.com/your-repo/smart-bus-stop
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/raspberry
+ExecStart=/usr/bin/python3 /home/pi/raspberry/main.py
+ExecStop=/bin/kill -SIGTERM $MAINPID
+ExecReload=/bin/kill -SIGHUP $MAINPID
+
+# 환경 변수
+Environment=PYTHONPATH=/home/pi/raspberry
+Environment=PYTHONUNBUFFERED=1
+
+# 재시작 정책
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+# 보안 설정
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/pi/raspberry
+ReadOnlyPaths=/home/pi/raspberry
+
+# 리소스 제한
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# 로깅
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bus-stop
+
+[Install]
+WantedBy=multi-user.target 
