@@ -42,12 +42,14 @@ const helmet_1 = __importDefault(require("helmet"));
 const compression_1 = __importDefault(require("compression"));
 const http_1 = require("http");
 const socket_io_1 = require("socket.io");
+const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const config_1 = __importStar(require("./config"));
 const logger_1 = __importDefault(require("./utils/logger"));
 const api_1 = __importDefault(require("./routes/api"));
 const redis_1 = __importDefault(require("./services/redis"));
 const mqtt_1 = __importDefault(require("./services/mqtt"));
 const etaProcessor_1 = __importDefault(require("./services/etaProcessor"));
+const swagger_1 = __importDefault(require("./config/swagger"));
 class SmartBusStopServer {
     app;
     server;
@@ -60,14 +62,15 @@ class SmartBusStopServer {
         this.setupWebSocket();
     }
     setupMiddleware() {
-        // 보안 미들웨어
+        // 보안 미들웨어 - Swagger UI를 위한 CSP 설정 수정
         this.app.use((0, helmet_1.default)({
             contentSecurityPolicy: {
                 directives: {
                     defaultSrc: ["'self'"],
                     styleSrc: ["'self'", "'unsafe-inline'"],
-                    scriptSrc: ["'self'"],
+                    scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Swagger UI를 위해 추가
                     imgSrc: ["'self'", "data:", "https:"],
+                    fontSrc: ["'self'", "https:", "data:"], // Swagger UI 폰트를 위해 추가
                 },
             },
         }));
@@ -93,21 +96,37 @@ class SmartBusStopServer {
         });
     }
     setupRoutes() {
+        // Swagger API 문서
+        this.app.use('/api-docs', swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swagger_1.default, {
+            explorer: true,
+            customCss: '.swagger-ui .topbar { display: none }',
+            customSiteTitle: 'Smart Bus Stop Bell System API',
+            swaggerOptions: {
+                persistAuthorization: true,
+                displayRequestDuration: true,
+                docExpansion: 'none',
+                operationsSorter: 'alpha',
+                tagsSorter: 'alpha',
+                tryItOutEnabled: true,
+                defaultModelsExpandDepth: 2
+            }
+        }));
         // API 라우트
         this.app.use('/api/v1', api_1.default);
-        // 루트 엔드포인트
+        // 루트 엔드포인트 - Swagger 문서 링크 추가
         this.app.get('/', (req, res) => {
             res.json({
-                name: 'Smart Bus Stop Bell System',
-                version: '1.0.0',
+                message: '🚌 Smart Bus Stop Bell System',
+                version: '2.0.0',
                 status: 'running',
-                timestamp: new Date(),
-                endpoints: {
-                    api: '/api/v1',
-                    health: '/api/v1/health',
-                    stats: '/api/v1/stats',
-                    websocket: '/socket.io'
-                }
+                features: [
+                    'Large-scale bus tracking (100+ buses)',
+                    'Regional clustering',
+                    'Parallel ETA processing',
+                    'Real-time notifications',
+                    'Performance monitoring'
+                ],
+                docs: '/api/v1/docs'
             });
         });
         // 404 핸들러
@@ -193,9 +212,9 @@ class SmartBusStopServer {
             // MQTT 연결
             await mqtt_1.default.connect();
             logger_1.default.info('✓ MQTT connected');
-            // ETA 프로세서 시작
+            // ETA 프로세서 시작 (대규모 처리)
             await etaProcessor_1.default.startProcessing();
-            logger_1.default.info('✓ ETA processor started');
+            logger_1.default.info('✓ Large-scale ETA processor started');
             logger_1.default.info('All services initialized successfully');
         }
         catch (error) {
@@ -225,7 +244,7 @@ class SmartBusStopServer {
                 }
                 // 서비스 정리
                 await etaProcessor_1.default.stopProcessing();
-                logger_1.default.info('ETA processor stopped');
+                logger_1.default.info('Large-scale ETA processor stopped');
                 await mqtt_1.default.disconnect();
                 logger_1.default.info('MQTT disconnected');
                 await redis_1.default.disconnect();
@@ -260,10 +279,15 @@ class SmartBusStopServer {
             // 서버 시작
             const port = config_1.default.port;
             this.server.listen(port, () => {
-                logger_1.default.info(`🚌 Smart Bus Stop Bell System started on port ${port}`);
+                logger_1.default.info(`🌐 Smart Bus Stop Bell System started on port ${port}`);
                 logger_1.default.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-                logger_1.default.info(`API: http://localhost:${port}/api/v1`);
-                logger_1.default.info(`WebSocket: ws://localhost:${port}/socket.io`);
+                logger_1.default.info(`📖 API Documentation: http://localhost:${port}/api-docs`);
+                // 시스템 통계 출력
+                const stats = etaProcessor_1.default.getProcessingStats();
+                const regions = etaProcessor_1.default.getRegionInfo();
+                logger_1.default.info(`📍 Initialized ${regions.length} regions with ${stats.totalStops} total stops`);
+                logger_1.default.info(`🚌 Ready to process 100+ buses across multiple regions`);
+                logger_1.default.info(`⏱️  ETA processing interval: ${config_1.default.location.etaUpdateIntervalMs}ms`);
             });
             // Graceful shutdown 설정
             this.setupGracefulShutdown();

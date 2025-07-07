@@ -56,7 +56,7 @@ export interface BusNotification {
   routeId: string;
   routeName: string;
   message: string;
-  type: 'APPROACHING' | 'ARRIVED' | 'DEPARTED';
+  type: 'APPROACHING' | 'ARRIVED' | 'DEPARTED' | 'PASSED';
   timestamp: Date;
 }
 

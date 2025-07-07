@@ -7,6 +7,7 @@ const mqtt_1 = __importDefault(require("mqtt"));
 const config_1 = __importDefault(require("../config"));
 const logger_1 = __importDefault(require("../utils/logger"));
 const redis_1 = __importDefault(require("./redis"));
+const etaProcessor_1 = __importDefault(require("./etaProcessor"));
 class MQTTService {
     client = null;
     isConnected = false;
@@ -122,8 +123,8 @@ class MQTTService {
         // Redis에 위치 저장
         await redis_1.default.saveBusLocation(busLocation);
         logger_1.default.debug(`Bus location updated: ${busId} at (${busLocation.latitude}, ${busLocation.longitude})`);
-        // ETA 계산 및 알림 처리 (나중에 구현)
-        // await this.processETACalculation(busLocation);
+        // ETA 프로세서에 위치 업데이트 알림 (대규모 처리)
+        await etaProcessor_1.default.onBusLocationUpdate(busLocation);
     }
     // 버스에게 알림 전송
     async sendNotificationToBus(busId, notification) {

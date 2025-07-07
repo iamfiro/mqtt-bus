@@ -166,6 +166,17 @@ const swaggerDefinition: swaggerJSDoc.SwaggerDefinition = {
                     type: 'string',
                     description: '노선 이름',
                     example: 'A노선'
+                  },
+                  buttonColor: {
+                    type: 'string',
+                    description: '버튼 색상 (HEX)',
+                    example: '#FF0000'
+                  },
+                  passengerCount: {
+                    type: 'integer',
+                    minimum: 1,
+                    description: '승객 수',
+                    example: 2
                   }
                 }
               }
@@ -260,7 +271,9 @@ const swaggerDefinition: swaggerJSDoc.SwaggerDefinition = {
                 required: ['routeId'],
                 properties: {
                   routeId: { type: 'string', description: '노선 ID', example: 'ROUTE_A' },
-                  routeName: { type: 'string', description: '노선 이름', example: 'A노선' }
+                  routeName: { type: 'string', description: '노선 이름', example: 'A노선' },
+                  buttonColor: { type: 'string', description: '버튼 색상 (HEX)', example: '#FF0000' },
+                  passengerCount: { type: 'integer', minimum: 1, description: '승객 수', example: 2 }
                 }
               }
             }
@@ -539,7 +552,7 @@ const swaggerDefinition: swaggerJSDoc.SwaggerDefinition = {
       post: {
         tags: ['Control'],
         summary: 'LED 상태 업데이트',
-        description: 'IoT 디바이스에서 관리하는 특정 정류장의 특정 노선 LED 상태를 업데이트합니다.',
+        description: '특정 정류장의 특정 노선 버튼 LED 상태를 업데이트합니다.',
         parameters: [
           { $ref: '#/components/parameters/StopId' },
           { $ref: '#/components/parameters/RouteId' }
@@ -706,6 +719,11 @@ const swaggerDefinition: swaggerJSDoc.SwaggerDefinition = {
             description: '노선 이름',
             example: 'A노선'
           },
+          buttonColor: {
+            type: 'string',
+            description: '버튼 색상',
+            example: '#FF0000'
+          },
           timestamp: {
             type: 'string',
             format: 'date-time',
@@ -714,6 +732,12 @@ const swaggerDefinition: swaggerJSDoc.SwaggerDefinition = {
           isActive: {
             type: 'boolean',
             description: '활성 상태'
+          },
+          passengerCount: {
+            type: 'integer',
+            minimum: 1,
+            description: '승객 수',
+            example: 2
           }
         },
         required: ['id', 'stopId', 'routeId', 'routeName', 'timestamp', 'isActive']
@@ -984,7 +1008,7 @@ const swaggerDefinition: swaggerJSDoc.SwaggerDefinition = {
     },
     {
       name: 'Control',
-      description: 'IoT 제어 (LED, 호출 해제 등)'
+      description: '시스템 제어 (LED, 호출 해제 등)'
     },
     {
       name: 'GTFS',

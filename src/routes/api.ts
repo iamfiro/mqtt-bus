@@ -846,6 +846,104 @@ router.get('/gtfs/trip-updates', (req: Request, res: Response) => {
   });
 });
 
+// 🔵 대규모 시스템 모니터링 APIs
+router.get('/system/stats', 
+  asyncHandler(async (req, res) => {
+    const stats = etaProcessorService.getProcessingStats();
+    const regionInfo = etaProcessorService.getRegionInfo();
+    
+    const systemStats = {
+      processing: stats,
+      regions: regionInfo,
+      systemHealth: {
+        isProcessing: stats.processingTimeMs > 0,
+        lastUpdate: stats.lastProcessedAt,
+        avgProcessingTime: stats.processingTimeMs
+      }
+    };
+    
+    sendResponse(res, true, systemStats);
+  })
+);
+
+// 지역별 정류장 정보 조회
+router.get('/regions/:regionId/stops',
+  param('regionId').isString().isLength({ min: 1 }),
+  handleValidationErrors,
+  asyncHandler(async (req, res) => {
+    const { regionId } = req.params;
+    const stops = etaProcessorService.getStopsInRegion(regionId);
+    
+    if (stops.length === 0) {
+      return sendResponse(res, false, undefined, `No stops found in region ${regionId}`);
+    }
+    
+    sendResponse(res, true, { regionId, stops, count: stops.length });
+  })
+);
+
+// 모든 정류장 조회 (페이징 지원)
+router.get('/stops/all',
+  query('page').optional().isInt({ min: 1 }).toInt(),
+  query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+  handleValidationErrors,
+  asyncHandler(async (req, res) => {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 50;
+    
+    const result = etaProcessorService.getAllBusStops(page, limit);
+    sendResponse(res, true, result);
+  })
+);
+
+// 지역 정보 조회
+router.get('/regions',
+  asyncHandler(async (req, res) => {
+    const regions = etaProcessorService.getRegionInfo();
+    sendResponse(res, true, { regions, count: regions.length });
+  })
+);
+
+// 🔵 실시간 대규모 ETA 조회 (지역별)
+router.get('/regions/:regionId/eta',
+  param('regionId').isString().isLength({ min: 1 }),
+  asyncHandler(async (req, res) => {
+    const { regionId } = req.params;
+    const stops = etaProcessorService.getStopsInRegion(regionId);
+    
+    if (stops.length === 0) {
+      return sendResponse(res, false, undefined, `No stops found in region ${regionId}`);
+    }
+    
+    // 각 정류장의 ETA 정보를 병렬로 조회
+    const etaPromises = stops.map(async (stop) => {
+      const activeCalls = await redisService.getActiveCallsForStop(stop.stopId);
+      const etaData = [];
+      
+      for (const call of activeCalls) {
+        // 해당 노선의 모든 버스 ETA 조회
+        const buses = await redisService.getBusesForRoute(call.routeId);
+        for (const bus of buses) {
+          const eta = await redisService.getETACalculation(bus.busId, stop.stopId);
+          if (eta) {
+            etaData.push(eta);
+          }
+        }
+      }
+      
+      return {
+        stopId: stop.stopId,
+        stopName: stop.name,
+        activeCalls: activeCalls.length,
+        etas: etaData
+      };
+    });
+    
+    const results = await Promise.all(etaPromises);
+    sendResponse(res, true, { regionId, stops: results });
+  })
+);
+
 // 에러 핸들링 미들웨어
 router.use((error: Error, req: Request, res: Response, next: Function) => {
   logger.error('API Error:', error);

@@ -3,6 +3,7 @@ import config from '../config';
 import logger from '../utils/logger';
 import { MQTTMessage, BusStopCall, BusLocation, BusNotification } from '../types';
 import redisService from './redis';
+import etaProcessorService from './etaProcessor';
 
 class MQTTService {
   private client: MqttClient | null = null;
@@ -140,8 +141,8 @@ class MQTTService {
 
     logger.debug(`Bus location updated: ${busId} at (${busLocation.latitude}, ${busLocation.longitude})`);
 
-    // ETA 계산 및 알림 처리 (나중에 구현)
-    // await this.processETACalculation(busLocation);
+    // ETA 프로세서에 위치 업데이트 알림 (대규모 처리)
+    await etaProcessorService.onBusLocationUpdate(busLocation);
   }
 
   // 버스에게 알림 전송

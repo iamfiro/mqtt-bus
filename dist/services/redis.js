@@ -173,6 +173,51 @@ class RedisService {
         const value = await this.client.get(key);
         return value !== null;
     }
+    // 알림 기록 삭제
+    async clearNotificationSent(busId, stopId) {
+        const key = `notification:${busId}:${stopId}`;
+        await this.client.del(key);
+    }
+    // 모든 활성 버스 위치 조회 (대규모 시스템용)
+    async getAllActiveBuses() {
+        const pattern = `bus:*:location`;
+        const keys = await this.client.keys(pattern);
+        const buses = [];
+        // 병렬로 모든 버스 위치 조회 (성능 최적화)
+        const promises = keys.map(async (key) => {
+            const value = await this.client.get(key);
+            if (value) {
+                try {
+                    return JSON.parse(value);
+                }
+                catch (error) {
+                    logger_1.default.error(`Error parsing bus location from key ${key}:`, error);
+                    return null;
+                }
+            }
+            return null;
+        });
+        const results = await Promise.all(promises);
+        for (const location of results) {
+            if (location) {
+                buses.push(location);
+            }
+        }
+        logger_1.default.debug(`Retrieved ${buses.length} active buses`);
+        return buses;
+    }
+    // 호출 취소 (대규모 시스템용)
+    async cancelCall(callId) {
+        // callId 형식: {stopId}-{routeId}-{timestamp}
+        const parts = callId.split('-');
+        if (parts.length >= 3) {
+            const stopId = parts[0];
+            const routeId = parts[1];
+            const key = `call:${stopId}:${routeId}`;
+            await this.client.del(key);
+            logger_1.default.info(`Call cancelled: ${callId}`);
+        }
+    }
     // 헬스 체크
     isHealthy() {
         return this.isConnected;

@@ -17,6 +17,9 @@ declare class RedisService {
     getETAsForStop(stopId: string): Promise<ETACalculation[]>;
     setNotificationSent(busId: string, stopId: string): Promise<void>;
     isNotificationSent(busId: string, stopId: string): Promise<boolean>;
+    clearNotificationSent(busId: string, stopId: string): Promise<void>;
+    getAllActiveBuses(): Promise<BusLocation[]>;
+    cancelCall(callId: string): Promise<void>;
     isHealthy(): boolean;
 }
 declare const _default: RedisService;

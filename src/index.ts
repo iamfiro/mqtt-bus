@@ -90,21 +90,17 @@ class SmartBusStopServer {
     // 루트 엔드포인트 - Swagger 문서 링크 추가
     this.app.get('/', (req, res) => {
       res.json({
-        name: 'Smart Bus Stop Bell System',
-        version: '1.0.0',
+        message: '🚌 Smart Bus Stop Bell System',
+        version: '2.0.0',
         status: 'running',
-        timestamp: new Date(),
-        endpoints: {
-          api: '/api/v1',
-          health: '/api/v1/health',
-          stats: '/api/v1/stats',
-          websocket: '/socket.io',
-          documentation: '/api-docs'
-        },
-        documentation: {
-          swagger: `${req.protocol}://${req.get('host')}/api-docs`,
-          description: 'Interactive API documentation with try-it-out functionality'
-        }
+        features: [
+          'Large-scale bus tracking (100+ buses)',
+          'Regional clustering',
+          'Parallel ETA processing',
+          'Real-time notifications',
+          'Performance monitoring'
+        ],
+        docs: '/api/v1/docs'
       });
     });
 
@@ -207,9 +203,9 @@ class SmartBusStopServer {
       await mqttService.connect();
       logger.info('✓ MQTT connected');
 
-      // ETA 프로세서 시작
+      // ETA 프로세서 시작 (대규모 처리)
       await etaProcessorService.startProcessing();
-      logger.info('✓ ETA processor started');
+      logger.info('✓ Large-scale ETA processor started');
 
       logger.info('All services initialized successfully');
 
@@ -245,7 +241,7 @@ class SmartBusStopServer {
 
         // 서비스 정리
         await etaProcessorService.stopProcessing();
-        logger.info('ETA processor stopped');
+        logger.info('Large-scale ETA processor stopped');
 
         await mqttService.disconnect();
         logger.info('MQTT disconnected');
@@ -289,10 +285,17 @@ class SmartBusStopServer {
       // 서버 시작
       const port = config.port;
       this.server.listen(port, () => {
-        logger.info(`🚌 Smart Bus Stop Bell System started on port ${port}`);
+        logger.info(`🌐 Smart Bus Stop Bell System started on port ${port}`);
         logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-        logger.info(`API: http://localhost:${port}/api/v1`);
-        logger.info(`WebSocket: ws://localhost:${port}/socket.io`);
+        logger.info(`📖 API Documentation: http://localhost:${port}/api-docs`);
+        
+        // 시스템 통계 출력
+        const stats = etaProcessorService.getProcessingStats();
+        const regions = etaProcessorService.getRegionInfo();
+        
+        logger.info(`📍 Initialized ${regions.length} regions with ${stats.totalStops} total stops`);
+        logger.info(`🚌 Ready to process 100+ buses across multiple regions`);
+        logger.info(`⏱️  ETA processing interval: ${config.location.etaUpdateIntervalMs}ms`);
       });
 
       // Graceful shutdown 설정
