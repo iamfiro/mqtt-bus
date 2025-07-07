@@ -4,7 +4,7 @@ services:
     image: redis:7-alpine
     container_name: smart-bus-redis
     ports:
-      - "6380:6379"
+      - "7001:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
@@ -21,8 +21,8 @@ services:
     image: eclipse-mosquitto:2
     container_name: smart-bus-mqtt
     ports:
-      - "1883:1883"
-      - "9001:9001"
+      - "7002:1883"
+      - "7003:9001"
     volumes:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - mosquitto_data:/mosquitto/data
@@ -42,7 +42,7 @@ services:
       dockerfile: Dockerfile
     container_name: smart-bus-app
     ports:
-      - "3000:3000"
+      - "7000:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
