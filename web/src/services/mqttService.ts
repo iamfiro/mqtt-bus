@@ -293,9 +293,16 @@ class BusMQTTService {
     this.client.publish(topic, JSON.stringify(message), { qos: 1, retain: true });
   }
 
+  // 클래스 멤버로 타이머 ID 저장
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+
   // 하트비트 시작
   private startHeartbeat(): void {
-    setInterval(async () => {
+    // 기존 타이머가 있으면 제거
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+    }
+    this.heartbeatTimer = setInterval(async () => {
       try {
         await this.getSystemHealth();
       } catch (error) {
