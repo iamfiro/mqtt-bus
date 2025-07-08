@@ -48,7 +48,7 @@ services:
       - PORT=3000
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - MQTT_BROKER_URL=mqtt://localhost:1883
+      - MQTT_BROKER_URL=mqtt://mosquitto:1883
       - LOG_LEVEL=info
       - DISTANCE_THRESHOLD_METERS=500
       - ETA_UPDATE_INTERVAL_MS=2000

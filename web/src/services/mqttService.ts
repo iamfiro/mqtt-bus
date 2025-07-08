@@ -1,6 +1,5 @@
 import mqtt, { MqttClient } from 'mqtt';
 import { 
-  BusLocation, 
   BusNotification, 
   MQTTRPCRequest, 
   MQTTRPCResponse, 
@@ -38,7 +37,7 @@ class BusMQTTService {
   private get brokerUrl(): string {
     return process.env.NODE_ENV === 'production' 
       ? 'wss://your-mqtt-broker.com:9001/mqtt'
-      : 'ws://localhost:9001';
+      : 'ws://localhost:7003'; // Docker Mosquitto WebSocket 포트
   }
 
   async connect(busId: string, routeId: string): Promise<void> {
@@ -277,30 +276,7 @@ class BusMQTTService {
     return await this.callRPC('info');
   }
 
-  // 버스 위치 전송
-  sendBusLocation(location: Omit<BusLocation, 'busId' | 'routeId' | 'timestamp'>): void {
-    if (!this.client || !this._isConnected) {
-      console.warn('⚠️ MQTT 연결되지 않아 위치 전송 불가');
-      return;
-    }
 
-    const busLocation: BusLocation = {
-      busId: this.busId,
-      routeId: this.routeId,
-      timestamp: new Date(),
-      ...location
-    };
-
-    const topic = `device/bus/${this.busId}/location`;
-    
-    this.client.publish(topic, JSON.stringify(busLocation), { qos: 1 }, (err) => {
-      if (err) {
-        console.error('❌ 위치 전송 실패:', err);
-      } else {
-        console.log('📍 위치 전송 성공:', topic);
-      }
-    });
-  }
 
   // 버스 상태 발행
   private publishBusStatus(status: 'online' | 'offline'): void {

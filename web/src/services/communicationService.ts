@@ -1,6 +1,5 @@
 import busMQTTService from './mqttService';
 import { 
-  BusLocation, 
   BusNotification, 
   SystemHealth, 
   SystemInfo,
@@ -21,9 +20,6 @@ class BusCommunicationService {
     busId: '',
     routeId: '',
     routeName: '',
-    currentLocation: null,
-    isTracking: false,
-    lastLocationUpdate: null,
     notifications: [],
     connectionStatus: {
       mqtt: false,
@@ -33,7 +29,6 @@ class BusCommunicationService {
   };
 
   private eventCallbacks = new Map<string, EventCallback[]>();
-  private locationWatchId: number | null = null;
 
   constructor() {
     this.setupMQTTEventHandlers();
@@ -100,9 +95,6 @@ class BusCommunicationService {
       await busMQTTService.connect(options.busId, options.routeId);
       console.log('✅ MQTT 연결 성공');
       
-      // GPS 추적 시작
-      this.startLocationTracking();
-      
       // 초기 시스템 정보 조회
       try {
         const systemInfo = await busMQTTService.getSystemInfo();
@@ -118,73 +110,7 @@ class BusCommunicationService {
     }
   }
 
-  // GPS 위치 추적 시작
-  private startLocationTracking(): void {
-    if (!navigator.geolocation) {
-      console.warn('⚠️ GPS를 지원하지 않는 브라우저입니다');
-      return;
-    }
 
-    console.log('📍 GPS 위치 추적 시작');
-    this.busStatus.isTracking = true;
-
-    this.locationWatchId = navigator.geolocation.watchPosition(
-      (position) => {
-        const location: BusLocation = {
-          busId: this.busStatus.busId,
-          routeId: this.busStatus.routeId,
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          speed: position.coords.speed || 0,
-          heading: position.coords.heading || 0,
-          timestamp: new Date(),
-          accuracy: position.coords.accuracy
-        };
-
-        // 버스 상태 업데이트
-        this.busStatus.currentLocation = location;
-        this.busStatus.lastLocationUpdate = new Date();
-
-        // MQTT로 위치 전송
-        busMQTTService.sendBusLocation({
-          latitude: location.latitude,
-          longitude: location.longitude,
-          speed: location.speed,
-          heading: location.heading,
-          accuracy: location.accuracy
-        });
-
-        // 이벤트 발행
-        this.emit('location-update', location);
-        this.emit('bus-status', this.busStatus);
-
-        console.log('📍 위치 업데이트:', {
-          lat: location.latitude.toFixed(6),
-          lng: location.longitude.toFixed(6),
-          speed: location.speed
-        });
-      },
-      (error) => {
-        console.error('❌ GPS 오류:', error);
-        this.emit('location-error', error);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 2000
-      }
-    );
-  }
-
-  // GPS 위치 추적 중지
-  private stopLocationTracking(): void {
-    if (this.locationWatchId !== null) {
-      navigator.geolocation.clearWatch(this.locationWatchId);
-      this.locationWatchId = null;
-      this.busStatus.isTracking = false;
-      console.log('📍 GPS 위치 추적 중지');
-    }
-  }
 
   // 시스템 헬스 체크
   async getSystemHealth(): Promise<SystemHealth> {
@@ -252,9 +178,6 @@ class BusCommunicationService {
   disconnect(): void {
     console.log('🚌 버스 통신 서비스 연결 해제');
     
-    // GPS 추적 중지
-    this.stopLocationTracking();
-    
     // MQTT 연결 해제
     busMQTTService.disconnect();
     
@@ -264,8 +187,6 @@ class BusCommunicationService {
       rpcReady: false,
       lastHeartbeat: null
     };
-    this.busStatus.isTracking = false;
-    this.busStatus.currentLocation = null;
     
     // 이벤트 발행
     this.emit('bus-status', this.busStatus);

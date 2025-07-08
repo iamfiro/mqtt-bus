@@ -13,15 +13,7 @@ interface BusCall {
   timestamp: string;
 }
 
-interface BusLocation {
-  busId: string;
-  routeId: string;
-  latitude: number;
-  longitude: number;
-  speed: number;
-  heading: number;
-  timestamp: string;
-}
+
 
 interface ETAData {
   stopId: string;
@@ -97,11 +89,7 @@ class ApiService {
     return response.data;
   }
 
-  // 📍 버스 위치 업데이트
-  async updateBusLocation(busId: string, location: Partial<BusLocation>): Promise<ApiResponse> {
-    const response = await this.client.post(`/api/v1/buses/${busId}/location`, location);
-    return response.data;
-  }
+
 
   // ⏰ ETA 조회
   async getETA(stopId: string, routeId?: string): Promise<ApiResponse<ETAData[]>> {

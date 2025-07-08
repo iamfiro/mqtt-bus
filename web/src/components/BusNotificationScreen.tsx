@@ -7,7 +7,7 @@ const BusNotificationScreen: React.FC = () => {
   const [isBlinking, setIsBlinking] = useState(false);
   const [busId] = useState(() => `BUS-${Math.random().toString(36).substr(2, 9).toUpperCase()}`);
   const [routeId] = useState(() => `ROUTE-${Math.floor(Math.random() * 900) + 100}`);
-  const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
+
   const [lastNotification, setLastNotification] = useState<BusNotification | null>(null);
   const [etaData, setEtaData] = useState<any[]>([]);
 
@@ -70,42 +70,7 @@ const BusNotificationScreen: React.FC = () => {
     };
   }, [busId, routeId]);
 
-  useEffect(() => {
-    let watchId: number;
 
-    if (connectionStatus.mqtt && navigator.geolocation) {
-      // GPS 위치 추적 시작
-      watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          const location = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            speed: position.coords.speed || 0,
-            heading: position.coords.heading || 0
-          };
-          
-          setCurrentLocation(location);
-          
-          // MQTT로 위치 전송
-          // communicationService에서 자동으로 전송하므로 별도 호출 불필요
-        },
-        (error) => {
-          console.error('GPS 오류:', error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 1000
-        }
-      );
-    }
-
-    return () => {
-      if (watchId) {
-        navigator.geolocation.clearWatch(watchId);
-      }
-    };
-  }, [connectionStatus.mqtt, busId, routeId]);
 
   const triggerBlink = () => {
     setIsBlinking(true);
@@ -158,12 +123,7 @@ const BusNotificationScreen: React.FC = () => {
           MQTT: {connectionStatus.mqtt ? '✅' : '❌'}
         </div>
         
-        <div style={{ fontSize: '1.5rem', marginBottom: '15px' }}>
-          <strong>GPS 위치:</strong> {currentLocation ? 
-            `${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)}` : 
-            '위치 탐색 중...'
-          }
-        </div>
+
         
         {etaData.length > 0 && (
           <div style={{ 
@@ -195,50 +155,6 @@ const BusNotificationScreen: React.FC = () => {
             <small>{new Date(lastNotification.timestamp).toLocaleTimeString()}</small>
           </div>
         )}
-
-        <div style={{ marginTop: '20px' }}>
-          <button 
-            onClick={() => {
-              // 연결 상태 갱신
-              const status = communicationService.getConnectionStatus();
-              console.log('현재 연결 상태:', status);
-            }}
-            style={{
-              padding: '10px 20px',
-              fontSize: '1rem',
-              backgroundColor: '#FF9800',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              marginRight: '10px'
-            }}
-          >
-            🔄 연결 새로고침
-          </button>
-          
-          <button 
-            onClick={async () => {
-              try {
-                const health = await communicationService.getSystemHealth();
-                alert('서버 상태: ' + JSON.stringify(health, null, 2));
-              } catch (error) {
-                alert('서버 연결 실패: ' + error);
-              }
-            }}
-            style={{
-              padding: '10px 20px',
-              fontSize: '1rem',
-              backgroundColor: '#9C27B0',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}
-          >
-            📊 서버 상태
-          </button>
-        </div>
         
         {isBlinking && (
           <div style={{ 

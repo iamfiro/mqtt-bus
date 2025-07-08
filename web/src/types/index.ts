@@ -12,24 +12,10 @@ export interface BusStopCall {
   passengerCount?: number;
 }
 
-// 버스 위치 데이터
-export interface BusLocation {
-  busId: string;
-  routeId: string;
-  latitude: number;
-  longitude: number;
-  speed: number; // km/h
-  heading: number; // degrees
-  timestamp: Date;
-  accuracy?: number; // meters
-}
-
 // 정류장 정보
 export interface BusStop {
   stopId: string;
   name: string;
-  latitude: number;
-  longitude: number;
   routes: string[]; // 이 정류장을 경유하는 노선들
 }
 
@@ -39,16 +25,6 @@ export interface Route {
   routeName: string;
   color: string;
   stops: string[]; // 정류장 ID 순서
-}
-
-// ETA 계산 결과
-export interface ETACalculation {
-  busId: string;
-  stopId: string;
-  routeId: string;
-  distanceMeters: number;
-  estimatedArrivalTime: Date;
-  confidence: number; // 0-1
 }
 
 // 알림 데이터
@@ -117,9 +93,6 @@ export interface BusStatus {
   busId: string;
   routeId: string;
   routeName?: string;
-  currentLocation: BusLocation | null;
-  isTracking: boolean;
-  lastLocationUpdate: Date | null;
   notifications: BusNotification[];
   connectionStatus: ConnectionStatus;
 } 

@@ -2,7 +2,6 @@ import { io, Socket } from 'socket.io-client';
 
 interface WebSocketEvents {
   'button-pressed': (data: any) => void;
-  'bus-location': (data: any) => void;
   'eta-update': (data: any) => void;
   'system-status': (data: any) => void;
 }
@@ -84,11 +83,7 @@ class WebSocketService {
       this.emit('button-pressed', data);
     });
 
-    // 버스 위치 업데이트
-    this.socket.on('bus-location', (data: any) => {
-      console.log('📍 버스 위치 업데이트:', data);
-      this.emit('bus-location', data);
-    });
+
 
     // ETA 업데이트
     this.socket.on('eta-update', (data: any) => {
